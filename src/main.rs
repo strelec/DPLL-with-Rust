@@ -1,9 +1,12 @@
+extern crate bit_set;
+
 use std::collections::HashSet;
+use bit_set::BitSet;
 use std::fmt;
 use std::io;
 use std::io::BufRead;
 
-type Set = HashSet<u16>;
+type Set = BitSet;
 
 #[derive(Debug)]
 struct Clause {
@@ -17,7 +20,7 @@ impl Clause {
 	}
 
 	fn simplify(&self, tx: &Set, fx: &Set) -> Clause {
-		Clause{ t: &self.t - fx, f: &self.f - tx }
+		Clause{ t: self.t.difference(tx).collect(), f: self.f.difference(fx).collect() }
 	}
 }
 
@@ -32,10 +35,10 @@ type CNF = Vec<Clause>;
 
 
 
-fn select_var_to_branch(formula: &CNF) -> u16 {
+fn select_var_to_branch(formula: &CNF) -> usize {
 	// Naive selection
-	*formula[0].t.iter().next().unwrap_or(
-		&formula[0].f.iter().next().unwrap_or(&0)
+	formula[0].t.iter().next().unwrap_or(
+		formula[0].f.iter().next().unwrap_or(0)
 	)
 }
 
@@ -54,8 +57,8 @@ fn dpll(formula: CNF) -> Option<Set> {
 	for clause in &formula {
 		match (clause.t.len(), clause.f.len()) {
 			(0, 0) => return None,
-			(1, 0) => t.extend(&clause.t),
-			(0, 1) => f.extend(&clause.f),
+			(1, 0) => t.union_with(&clause.t),
+			(0, 1) => f.union_with(&clause.f),
 			_ => {}
 		}
 	}
@@ -70,14 +73,14 @@ fn dpll(formula: CNF) -> Option<Set> {
 	let mut falses = Set::new();
 
 	for clause in &formula {
-		trues.extend(&clause.t);
-		falses.extend(&clause.f);
+		trues.union_with(&clause.t);
+		falses.union_with(&clause.f);
 	}
 
-	t.extend(&trues);
-	for s in &falses { t.remove(&s); }
-	f.extend(&falses);
-	for s in &trues { f.remove(&s); }
+	t.union_with(&trues);
+	t.difference_with(&falses);
+	f.union_with(&falses);
+	f.difference_with(&trues);
 
 	//println!("Known clauses: {:?} {:?}", t, f);
 
@@ -89,17 +92,17 @@ fn dpll(formula: CNF) -> Option<Set> {
 
 		t.insert(branch_var);
 		if let Some(set) = dpll(propagate(&formula, &t, &f)) {
-			return Some(&set | &t)
+			return Some(set.union(&t).collect())
 		}
 
-		t.remove(&branch_var);
+		t.remove(branch_var);
 		f.insert(branch_var);
 		if let Some(set) = dpll(propagate(&formula, &t, &f)) {
 			return Some(set)
 		}
 	} else {
 		if let Some(set) = dpll(propagate(&formula, &t, &f)) {
-			return Some(&set | &t)
+			return Some(set.union(&t).collect())
 		}
 	}
 
@@ -119,7 +122,7 @@ fn main() {
 				for v in line.split_whitespace() {
 					let n: i32 = v.parse::<i32>().unwrap();
 					//assert!(n != 0);
-					if n > 0 { t.insert(n as u16); } else if n < 0 { f.insert(-n as u16); }
+					if n > 0 { t.insert(n as usize); } else if n < 0 { f.insert(-n as usize); }
 				}
 				Some(Clause { t: t, f: f })
 			}
