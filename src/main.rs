@@ -118,8 +118,8 @@ fn main() {
 				let mut f = Set::new();
 				for v in line.split_whitespace() {
 					let n: i32 = v.parse::<i32>().unwrap();
-					//assert!(n != 0);
-					if n > 0 { t.insert(n as usize); } else if n < 0 { f.insert(-n as usize); }
+					if n == 0 { break };
+					if n > 0 { t.insert(n as usize) } else { f.insert(-n as usize) };
 				}
 				Some(Clause { t: t, f: f })
 			}
