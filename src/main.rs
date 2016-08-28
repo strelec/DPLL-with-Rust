@@ -2,9 +2,9 @@ extern crate bit_set;
 
 use std::collections::HashSet;
 use bit_set::BitSet;
+use std::cmp::Ordering::*;
 use std::fmt;
 use std::io;
-use std::io::BufRead;
 
 type Set = BitSet;
 
@@ -103,9 +103,8 @@ fn dpll(formula: CNF) -> Option<Set> {
 	None
 }
 
-fn main() {
-	let stdin = io::stdin();
-	let formula = stdin.lock().lines().flat_map( |x| {
+fn read_input<T: io::BufRead + Sized>(source: T) -> CNF {
+	source.lines().flat_map( |x| {
 		let y = x.unwrap();
 		let line = y.trim();
 		match line.chars().nth(0).unwrap() {
@@ -115,13 +114,21 @@ fn main() {
 				let mut f = Set::new();
 				for v in line.split_whitespace() {
 					let n: i32 = v.parse::<i32>().unwrap();
-					if n == 0 { break };
-					if n > 0 { t.insert(n as usize) } else { f.insert(-n as usize) };
+					match n.cmp(&0) {
+						Equal => break,
+						Greater => t.insert(n as usize),
+						Less => f.insert(-n as usize)
+					};
 				}
 				Some(Clause { t: t, f: f })
 			}
 		}
-	}).collect();
+	}).collect()
+}
+
+fn main() {
+	let stdin = io::stdin();
+	let formula = read_input(stdin.lock());
 
 	println!("{:?}", dpll(formula));
 }
