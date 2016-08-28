@@ -37,8 +37,8 @@ type CNF = Vec<Clause>;
 
 fn select_var_to_branch(formula: &CNF) -> usize {
 	// Naive selection
-	formula[0].t.iter().next().unwrap_or(
-		formula[0].f.iter().next().unwrap_or(0)
+	formula[0].t.iter().next().unwrap_or_else( ||
+		formula[0].f.iter().next().unwrap()
 	)
 }
 
@@ -86,9 +86,6 @@ fn dpll(formula: CNF) -> Option<Set> {
 
 	if t.is_empty() && f.is_empty() {
 		let branch_var = select_var_to_branch(&formula);
-		if branch_var == 0 {
-			return None
-		}
 
 		t.insert(branch_var);
 		if let Some(set) = dpll(propagate(&formula, &t, &f)) {
