@@ -1,0 +1,7 @@
+[package]
+name = "dpll-rust"
+version = "0.1.0"
+authors = ["Rok Kralj <info@rok-kralj.net>"]
+
+[dependencies]
+bit-set = "*"
