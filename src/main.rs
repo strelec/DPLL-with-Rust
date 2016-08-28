@@ -47,7 +47,6 @@ fn propagate(formula: &CNF, t: &Set, f: &Set) -> CNF {
 }
 
 fn dpll(formula: CNF) -> Option<Set> {
-	//println!("Call: {:?}", formula);
 	if formula.is_empty() { return Some(Set::new()) }
 
 	// Step 1: Detect unit clauses
@@ -63,7 +62,6 @@ fn dpll(formula: CNF) -> Option<Set> {
 		}
 	}
 
-	//println!("Unit clauses: {:?} {:?}", t, f);
 	if !t.is_disjoint(&f) {
 		return None
 	}
@@ -82,8 +80,7 @@ fn dpll(formula: CNF) -> Option<Set> {
 	f.union_with(&falses);
 	f.difference_with(&trues);
 
-	//println!("Known clauses: {:?} {:?}", t, f);
-
+	// Step 3: Apply free variables or branch if forced to
 	if t.is_empty() && f.is_empty() {
 		let branch_var = select_var_to_branch(&formula);
 
