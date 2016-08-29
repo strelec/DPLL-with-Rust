@@ -1,6 +1,7 @@
 extern crate bit_set;
 
 use std::cmp::Ordering::*;
+use std::fs::File;
 use std::io;
 
 mod solver;
@@ -29,9 +30,18 @@ fn read_input<T: io::BufRead + Sized>(source: T) -> CNF {
 	}).collect()
 }
 
-fn main() {
+fn read_stdin() -> CNF {
 	let stdin = io::stdin();
-	let formula = read_input(stdin.lock());
+	let locked = stdin.lock();
+	read_input(locked)
+}
 
-	println!("{:?}", dpll(formula));
+fn read_file(name: String) -> CNF {
+	let file = io::BufReader::new(File::open(name).unwrap());
+	read_input(file)
+}
+
+fn main() {
+	let formula = read_stdin();
+	println!("{:?}", dpll(formula))
 }
