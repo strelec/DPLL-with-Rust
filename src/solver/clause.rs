@@ -20,9 +20,8 @@ impl Clause {
 		!(self.t.is_disjoint(tx) && self.f.is_subset(tx))
 	}
 
-	pub fn simplify(&self, tx: &Set, fx: &Set) -> Clause {
-		let u = tx.union(fx).collect();
-		Clause{ t: self.t.difference(&u).collect(), f: self.f.difference(&u).collect() }
+	pub fn simplify(&self, v: &Set) -> Clause {
+		Clause{ t: self.t.difference(v).collect(), f: self.f.difference(v).collect() }
 	}
 }
 

@@ -10,7 +10,8 @@ fn select_var_to_branch(formula: &CNF) -> usize {
 }
 
 fn propagate(formula: &CNF, t: &Set, f: &Set) -> CNF {
-	formula.iter().filter( |c| !c.eval(t, f) ).map( |c| c.simplify(t, f) ).collect()
+	let v: Set = t.union(f).collect();
+	formula.iter().filter( |c| !c.eval(t, f) ).map( |c| c.simplify(&v) ).collect()
 }
 
 
