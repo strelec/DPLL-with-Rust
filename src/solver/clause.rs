@@ -21,7 +21,8 @@ impl Clause {
 	}
 
 	pub fn simplify(&self, tx: &Set, fx: &Set) -> Clause {
-		Clause{ t: self.t.difference(tx).collect(), f: self.f.difference(fx).collect() }
+		let u = tx.union(fx).collect();
+		Clause{ t: self.t.difference(&u).collect(), f: self.f.difference(&u).collect() }
 	}
 }
 

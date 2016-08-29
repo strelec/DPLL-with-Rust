@@ -48,7 +48,6 @@ fn main() {
 		Some(solution) => {
 			println!("{:?}", solution);
 			// Assert that the solution is correct.
-			println!("{:?}", formula.iter().map( |c| c.eval_complete(&solution) ).collect::<Vec<_>>());
 			assert!(formula.iter().all( |c| c.eval_complete(&solution) ))
 		}
 		None => println!("There is no solution.")
