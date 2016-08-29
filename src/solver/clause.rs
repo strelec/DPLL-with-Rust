@@ -16,6 +16,10 @@ impl Clause {
 		!(self.t.is_disjoint(tx) && self.f.is_disjoint(fx))
 	}
 
+	pub fn eval_complete(&self, tx: &Set) -> bool {
+		!(self.t.is_disjoint(tx) && self.f.is_subset(tx))
+	}
+
 	pub fn simplify(&self, tx: &Set, fx: &Set) -> Clause {
 		Clause{ t: self.t.difference(tx).collect(), f: self.f.difference(fx).collect() }
 	}

@@ -43,5 +43,14 @@ fn read_file(name: String) -> CNF {
 
 fn main() {
 	let formula = read_stdin();
-	println!("{:?}", dpll(formula))
+
+	match dpll(&formula) {
+		Some(solution) => {
+			println!("{:?}", solution);
+			// Assert that the solution is correct.
+			println!("{:?}", formula.iter().map( |c| c.eval_complete(&solution) ).collect::<Vec<_>>());
+			assert!(formula.iter().all( |c| c.eval_complete(&solution) ))
+		}
+		None => println!("There is no solution.")
+	}
 }
