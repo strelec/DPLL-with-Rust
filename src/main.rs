@@ -14,14 +14,14 @@ fn read_input<T: io::BufRead + Sized>(source: T) -> CNF {
 		match line.chars().nth(0).unwrap() {
 			'c' | 'p' => None,
 			_ => {
-				let mut t = Set::new();
-				let mut f = Set::new();
+				let mut t = Bag::new();
+				let mut f = Bag::new();
 				for v in line.split_whitespace() {
 					let n: i32 = v.parse::<i32>().unwrap();
 					match n.cmp(&0) {
-						Equal => break,
-						Greater => t.insert(n as usize),
-						Less => f.insert(-n as usize)
+						Equal   => break,
+						Greater => t.push(n as usize),
+						Less    => f.push(-n as usize)
 					};
 				}
 				Some(Clause { t: t, f: f })

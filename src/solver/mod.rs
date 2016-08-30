@@ -4,7 +4,7 @@ mod clause;
 
 fn select_var_to_branch(formula: &CNF) -> usize {
 	// Naive selection
-	formula[0].t.iter().next().unwrap_or_else( ||
+	*formula[0].t.iter().next().unwrap_or_else( ||
 		formula[0].f.iter().next().unwrap()
 	)
 }
@@ -25,8 +25,8 @@ pub fn dpll(formula: &CNF) -> Option<Set> {
 	for clause in formula {
 		match (clause.t.len(), clause.f.len()) {
 			(0, 0) => return None,
-			(1, 0) => t.union_with(&clause.t),
-			(0, 1) => f.union_with(&clause.f),
+			(1, 0) => for v in &clause.t { t.insert(*v); },
+			(0, 1) => for v in &clause.f { f.insert(*v); },
 			_ => {}
 		}
 	}
@@ -40,8 +40,8 @@ pub fn dpll(formula: &CNF) -> Option<Set> {
 	let mut falses = Set::new();
 
 	for clause in formula {
-		trues.union_with(&clause.t);
-		falses.union_with(&clause.f);
+		for v in &clause.t { trues.insert(*v); };
+		for v in &clause.f { falses.insert(*v); }
 	}
 
 	t.union_with(&trues);
