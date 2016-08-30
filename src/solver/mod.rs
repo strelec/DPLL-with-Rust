@@ -18,30 +18,28 @@ fn propagate(formula: &CNF, t: &Set, f: &Set) -> CNF {
 pub fn dpll(formula: &CNF) -> Option<Set> {
 	if formula.is_empty() { return Some(Set::new()) }
 
-	// Step 1: Detect unit clauses
 	let mut t = Set::new();
 	let mut f = Set::new();
 
+	let mut trues = Set::new();
+	let mut falses = Set::new();
+
 	for clause in formula {
+		// Step 1: Detect unit clauses
 		match (clause.t.len(), clause.f.len()) {
 			(0, 0) => return None,
 			(1, 0) => for v in &clause.t { t.insert(*v); },
 			(0, 1) => for v in &clause.f { f.insert(*v); },
 			_ => {}
 		}
+
+		// Step 2: Detect pure variables
+		for v in &clause.t { trues.insert(*v); };
+		for v in &clause.f { falses.insert(*v); }
 	}
 
 	if !t.is_disjoint(&f) {
 		return None
-	}
-
-	// Step 2: Detect pure variables
-	let mut trues = Set::new();
-	let mut falses = Set::new();
-
-	for clause in formula {
-		for v in &clause.t { trues.insert(*v); };
-		for v in &clause.f { falses.insert(*v); }
 	}
 
 	t.union_with(&trues);
