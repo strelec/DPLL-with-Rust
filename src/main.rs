@@ -44,7 +44,7 @@ fn read_file(name: String) -> CNF {
 fn main() {
 	let formula = read_stdin();
 
-	match dpll(&formula) {
+	match dpll(&formula, &Set::new(), &Set::new()) {
 		Some(solution) => {
 			println!("{:?}", solution);
 			// Assert that the solution is correct.

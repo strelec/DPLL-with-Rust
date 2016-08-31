@@ -22,12 +22,6 @@ impl Clause {
 		self.t.iter().any( |&v|  t.contains(v) ) ||
 		self.f.iter().any( |&v| !t.contains(v) )
 	}
-
-	pub fn simplify(&self, vars: &Set) -> Clause {
-		Clause{
-			t: self.t.clone().into_iter().filter( |v| !vars.contains(*v) ).collect(),
-			f: self.f.clone().into_iter().filter( |v| !vars.contains(*v) ).collect() }
-	}
 }
 
 impl fmt::Display for Clause {
