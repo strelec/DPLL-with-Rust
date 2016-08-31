@@ -1,12 +1,28 @@
 pub use self::clause::*;
+use std::cmp::max;
 
 mod clause;
 
 fn branching_strategy(formula: &CNF, t: &Set, f: &Set) -> usize {
-	// Naive selection
-	(1usize..).find( |v|
-		!(t.contains(*v) || f.contains(*v))
-	).unwrap()
+	// Select the most commonly occuring variable
+	let mut counts = vec![0; max(t.capacity(), f.capacity())+1];
+	for clause in formula {
+		if clause.eval(t, f) { continue }
+		for v in &clause.t { counts[*v] += 1 };
+		for v in &clause.f { counts[*v] += 1 };
+	}
+	for v in t { counts[v] = 0 };
+	for v in f { counts[v] = 0 };
+
+	let mut count = 0usize;
+	let mut result = 0usize;
+	for (i, item) in counts.iter().enumerate() {
+		if *item > count {
+			count = *item;
+			result = i;
+		}
+	}
+	result
 }
 
 fn find_unit(bag: &Bag, filter: &Set, up_to: u8) -> (u8, usize) {
