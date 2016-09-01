@@ -8,7 +8,7 @@ mod solver;
 use solver::*;
 
 fn read_input<T: io::BufRead + Sized>(source: T) -> CNF {
-	CNF { formula: source.lines().flat_map( |x| {
+	CNF::new(source.lines().flat_map( |x| {
 		let y = x.unwrap();
 		let line = y.trim();
 		match line.chars().nth(0).unwrap() {
@@ -27,7 +27,7 @@ fn read_input<T: io::BufRead + Sized>(source: T) -> CNF {
 				Some(Clause { t: t, f: f })
 			}
 		}
-	}).collect() }
+	}).collect())
 }
 
 fn read_stdin() -> CNF {

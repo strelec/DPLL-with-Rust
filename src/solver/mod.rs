@@ -4,10 +4,14 @@ use std::cmp::max;
 mod clause;
 
 pub struct CNF {
-	pub formula: Vec<Clause>
+	formula: Vec<Clause>
 }
 
 impl CNF {
+	pub fn new(formula: Vec<Clause>) -> CNF {
+		CNF { formula: formula }
+	}
+
 	fn branching_strategy(self: &CNF, t: &Set, f: &Set) -> usize {
 		// Select the most commonly occuring variable
 		let mut counts = vec![0; max(t.capacity(), f.capacity())+1];
@@ -30,7 +34,7 @@ impl CNF {
 		result
 	}
 
-	fn find_unit(self: &CNF, bag: &Bag, filter: &Set, up_to: u8) -> (u8, usize) {
+	fn find_unit(bag: &Bag, filter: &Set, up_to: u8) -> (u8, usize) {
 		let mut count = 0u8;
 		let mut var = 0;
 		for &v in bag {
@@ -65,15 +69,15 @@ impl CNF {
 				satisfied = false;
 
 				// Step 1: Detect unit clauses
-				match self.find_unit(&clause.t, &f, 2) {
+				match CNF::find_unit(&clause.t, &f, 2) {
 					(0, _) =>
-						match self.find_unit(&clause.f, &t, 2) {
+						match CNF::find_unit(&clause.f, &t, 2) {
 							(0, _) => return None,
 							(1, v) => {f.insert(v);},
 							_ => {}
 						},
 					(1, v) =>
-						match self.find_unit(&clause.f, &t, 1) {
+						match CNF::find_unit(&clause.f, &t, 1) {
 							(0, _) => {t.insert(v);},
 							_ => {}
 						},
