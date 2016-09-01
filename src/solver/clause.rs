@@ -29,5 +29,3 @@ impl fmt::Display for Clause {
 		write!(f, "({:?}, {:?})", self.t, self.f)
 	}
 }
-
-pub type CNF = Vec<Clause>;

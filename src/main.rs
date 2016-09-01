@@ -8,7 +8,7 @@ mod solver;
 use solver::*;
 
 fn read_input<T: io::BufRead + Sized>(source: T) -> CNF {
-	source.lines().flat_map( |x| {
+	CNF { formula: source.lines().flat_map( |x| {
 		let y = x.unwrap();
 		let line = y.trim();
 		match line.chars().nth(0).unwrap() {
@@ -27,7 +27,7 @@ fn read_input<T: io::BufRead + Sized>(source: T) -> CNF {
 				Some(Clause { t: t, f: f })
 			}
 		}
-	}).collect()
+	}).collect() }
 }
 
 fn read_stdin() -> CNF {
@@ -44,11 +44,11 @@ fn read_file(name: String) -> CNF {
 fn main() {
 	let formula = read_stdin();
 
-	match dpll(&formula, &Set::new(), &Set::new()) {
+	match formula.dpll(&Set::new(), &Set::new()) {
 		Some(solution) => {
 			println!("{:?}", solution);
 			// Assert that the solution is correct.
-			assert!(formula.iter().all( |c| c.eval_complete(&solution) ))
+			assert!(formula.validate(&solution))
 		}
 		None => println!("There is no solution.")
 	}
