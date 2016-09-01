@@ -110,7 +110,7 @@ impl CNF {
 
 		t.insert(branch_var);
 		if let Some(set) = self.dpll(&t, &f) {
-			return Some(set.union(&t).collect())
+			return Some(set)
 		}
 
 		t.remove(branch_var);
