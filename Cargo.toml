@@ -5,3 +5,6 @@ authors = ["Rok Kralj <info@rok-kralj.net>"]
 
 [dependencies]
 bit-set = "*"
+
+[profile.release]
+lto = true
