@@ -96,47 +96,37 @@ impl CNF {
 		let mut t = t.clone();
 		let mut f = f.clone();
 
-		let mut trues = Set::new();
-		let mut falses = Set::new();
-
 		loop { // until there are no more pure or unit clauses
-			trues.clear();
-			falses.clear();
-
+			// Step 1: Detect unit clauses
 			for i in 0..self.formula.len() {
 				if self.check_satisfied(i, &t, &f) { continue }
-				// let Clause { t: ref ct, f: ref cf } = self.formula[i];
 
-				// Step 1: Detect unit clauses
 				match CNF::find_unit(&self.formula[i].t, &f, 2) {
 					(0, _) =>
 						match CNF::find_unit(&self.formula[i].f, &t, 2) {
-							(0, _) => { self.pop_state(height); return None},
-							(1, v) => { f.insert(v); self.mark_satisfied(i); continue },
+							(0, _) => { self.pop_state(height); return None },
+							(1, v) => { f.insert(v); self.mark_satisfied(i) },
 							_ => {}
 						},
 					(1, v) =>
 						match CNF::find_unit(&self.formula[i].f, &t, 1) {
-							(0, _) => { t.insert(v); self.mark_satisfied(i); continue },
+							(0, _) => { t.insert(v); self.mark_satisfied(i) },
 							_ => {}
 						},
 					_ => {}
 				}
-
-				// Step 2: Detect pure variables
-				for v in &self.formula[i].t { trues.insert(*v); };
-				for v in &self.formula[i].f { falses.insert(*v); }
 			}
 
 			if self.all_satisfied() { return Some(t) }
 			if !t.is_disjoint(&f) { self.pop_state(height); return None }
 
-			trues.difference_with(&f);
-			falses.difference_with(&t);
-			t.union_with(&trues);
-			t.difference_with(&falses);
-			f.union_with(&falses);
-			f.difference_with(&trues);
+			// Step 2: Detect pure variables
+			for i in 0..self.count_t.len() {
+				let tx = self.count_t[i] != 0 && self.count_f[i] == 0 && !f.contains(i);
+				let fx = self.count_f[i] != 0 && self.count_t[i] == 0 && !t.contains(i);
+				if tx { t.insert(i); }
+				if fx { f.insert(i); }
+			}
 
 			let new_known = t.len() + f.len();
 			assert!(new_known >= known);
