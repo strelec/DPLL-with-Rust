@@ -102,12 +102,12 @@ impl CNF {
 					(0, _) =>
 						match CNF::find_unit(&self.formula[i].f, &t, 2) {
 							(0, _) => { self.pop_state(height); return None},
-							(1, v) => { f.insert(v); self.mark_satisfied(i) },
+							(1, v) => { f.insert(v); self.mark_satisfied(i); continue },
 							_ => {}
 						},
 					(1, v) =>
 						match CNF::find_unit(&self.formula[i].f, &t, 1) {
-							(0, _) => { t.insert(v); self.mark_satisfied(i) },
+							(0, _) => { t.insert(v); self.mark_satisfied(i); continue },
 							_ => {}
 						},
 					_ => {}
