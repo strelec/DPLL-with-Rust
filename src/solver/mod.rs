@@ -1,5 +1,4 @@
 pub use self::clause::*;
-use std::cmp::max;
 
 mod clause;
 
@@ -8,35 +7,42 @@ pub struct CNF {
 	formula: Vec<Clause>,
 	mask: Vec<bool>,
 	history: Vec<usize>,
+	count_t: Vec<u16>, count_f: Vec<u16>,
 }
 
 impl CNF {
 	pub fn new(formula: Vec<Clause>) -> CNF {
 		let len = formula.len();
+
+		let mut variable_count = 0usize;
+		for clause in &formula {
+			for v in &clause.t { if *v > variable_count { variable_count = *v } }
+			for v in &clause.f { if *v > variable_count { variable_count = *v } }
+		}
+
+		let mut count_t = vec![0u16; variable_count+1];
+		let mut count_f = vec![0u16; variable_count+1];
+		for clause in &formula {
+			for v in &clause.t { count_t[*v] += 1 }
+			for v in &clause.f { count_f[*v] += 1 }
+		}
+
 		CNF {
 			formula: formula,
 			mask: vec![false; len],
 			history: Vec::with_capacity(len),
+			count_t: count_t, count_f: count_f,
 		}
 	}
 
 	fn branching_strategy(self: &CNF, t: &Set, f: &Set) -> usize {
 		// Select the most commonly occuring variable
-		let mut counts = vec![0; max(t.capacity(), f.capacity())+1];
-		for i in 0..self.formula.len() {
-			if self.mask[i] { continue }
-			let Clause { t: ref ct, f: ref cf } = self.formula[i];
-			for v in ct { counts[*v] += 1 }
-			for v in cf { counts[*v] += 1 }
-		}
-		for v in t { counts[v] = 0 };
-		for v in f { counts[v] = 0 };
-
-		let mut count = 0usize;
+		let mut count = 0u16;
 		let mut result = 0usize;
-		for (i, item) in counts.iter().enumerate() {
-			if *item > count {
-				count = *item;
+		for i in 0..self.count_t.len() {
+			let item = self.count_t[i] + self.count_f[i];
+			if item > count && !t.contains(i) && !f.contains(i) {
+				count = item;
 				result = i;
 			}
 		}
@@ -62,7 +68,9 @@ impl CNF {
 
 	fn mark_satisfied(self: &mut CNF, i: usize) {
 		self.mask[i] = true;
-		self.history.push(i)
+		self.history.push(i);
+		for v in &self.formula[i].t { self.count_t[*v] -= 1 }
+		for v in &self.formula[i].f { self.count_f[*v] -= 1 }
 	}
 
 	fn check_satisfied(self: &mut CNF, i: usize, t: &Set, f: &Set) -> bool {
@@ -74,6 +82,8 @@ impl CNF {
 	fn pop_state(self: &mut CNF, height: usize) {
 		for i in self.history[height..].into_iter() {
 			self.mask[*i] = false;
+			for v in &self.formula[*i].t { self.count_t[*v] += 1 }
+			for v in &self.formula[*i].f { self.count_f[*v] += 1 }
 		}
 		self.history.truncate(height)
 	}
