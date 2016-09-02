@@ -3,22 +3,31 @@ use std::cmp::max;
 
 mod clause;
 
+#[derive(Clone)]
 pub struct CNF {
-	formula: Vec<Clause>
+	formula: Vec<Clause>,
+	mask: Vec<bool>,
+	history: Vec<usize>,
 }
 
 impl CNF {
 	pub fn new(formula: Vec<Clause>) -> CNF {
-		CNF { formula: formula }
+		let len = formula.len();
+		CNF {
+			formula: formula,
+			mask: vec![false; len],
+			history: Vec::with_capacity(len),
+		}
 	}
 
 	fn branching_strategy(self: &CNF, t: &Set, f: &Set) -> usize {
 		// Select the most commonly occuring variable
 		let mut counts = vec![0; max(t.capacity(), f.capacity())+1];
-		for clause in &self.formula {
-			if clause.eval(t, f) { continue }
-			for v in &clause.t { counts[*v] += 1 };
-			for v in &clause.f { counts[*v] += 1 };
+		for i in 0..self.formula.len() {
+			if self.mask[i] { continue }
+			let Clause { t: ref ct, f: ref cf } = self.formula[i];
+			for v in ct { counts[*v] += 1 }
+			for v in cf { counts[*v] += 1 }
 		}
 		for v in t { counts[v] = 0 };
 		for v in f { counts[v] = 0 };
@@ -47,10 +56,33 @@ impl CNF {
 		(count, var)
 	}
 
+	fn all_satisfied(self: &CNF) -> bool {
+		self.history.len() == self.formula.len()
+	}
 
-	pub fn dpll(self: &CNF, t: &Set, f: &Set) -> Option<Set> {
+	fn mark_satisfied(self: &mut CNF, i: usize) {
+		self.mask[i] = true;
+		self.history.push(i)
+	}
+
+	fn check_satisfied(self: &mut CNF, i: usize, t: &Set, f: &Set) -> bool {
+		self.mask[i] || self.formula[i].eval(&t, &f) && {
+			self.mark_satisfied(i); true
+		}
+	}
+
+	fn pop_state(self: &mut CNF, height: usize) {
+		for i in self.history[height..].into_iter() {
+			self.mask[*i] = false;
+		}
+		self.history.truncate(height)
+	}
+
+
+	pub fn dpll(self: &mut CNF, t: &Set, f: &Set) -> Option<Set> {
+		let height = self.history.len();
+
 		let mut known = t.len() + f.len();
-
 		let mut t = t.clone();
 		let mut f = f.clone();
 
@@ -61,36 +93,33 @@ impl CNF {
 			trues.clear();
 			falses.clear();
 
-			let mut satisfied = true;
-			for clause in &self.formula {
-				if clause.eval(&t, &f) {
-					continue
-				}
-				satisfied = false;
+			for i in 0..self.formula.len() {
+				if self.check_satisfied(i, &t, &f) { continue }
+				// let Clause { t: ref ct, f: ref cf } = self.formula[i];
 
 				// Step 1: Detect unit clauses
-				match CNF::find_unit(&clause.t, &f, 2) {
+				match CNF::find_unit(&self.formula[i].t, &f, 2) {
 					(0, _) =>
-						match CNF::find_unit(&clause.f, &t, 2) {
-							(0, _) => return None,
-							(1, v) => {f.insert(v);},
+						match CNF::find_unit(&self.formula[i].f, &t, 2) {
+							(0, _) => { self.pop_state(height); return None},
+							(1, v) => { f.insert(v); self.mark_satisfied(i) },
 							_ => {}
 						},
 					(1, v) =>
-						match CNF::find_unit(&clause.f, &t, 1) {
-							(0, _) => {t.insert(v);},
+						match CNF::find_unit(&self.formula[i].f, &t, 1) {
+							(0, _) => { t.insert(v); self.mark_satisfied(i) },
 							_ => {}
 						},
 					_ => {}
 				}
 
 				// Step 2: Detect pure variables
-				for v in &clause.t { trues.insert(*v); };
-				for v in &clause.f { falses.insert(*v); }
+				for v in &self.formula[i].t { trues.insert(*v); };
+				for v in &self.formula[i].f { falses.insert(*v); }
 			}
 
-			if satisfied { return Some(t) }
-			if !t.is_disjoint(&f) { return None }
+			if self.all_satisfied() { return Some(t) }
+			if !t.is_disjoint(&f) { self.pop_state(height); return None }
 
 			trues.difference_with(&f);
 			falses.difference_with(&t);
@@ -119,6 +148,7 @@ impl CNF {
 			return Some(set)
 		}
 
+		self.pop_state(height);
 		None
 	}
 	

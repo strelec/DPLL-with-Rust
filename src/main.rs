@@ -42,13 +42,14 @@ fn read_file(name: String) -> CNF {
 }
 
 fn main() {
-	let formula = read_stdin();
+	let mut formula = read_stdin();
+	let formula_copy = formula.clone();
 
 	match formula.dpll(&Set::new(), &Set::new()) {
 		Some(solution) => {
 			println!("{:?}", solution);
 			// Assert that the solution is correct.
-			assert!(formula.validate(&solution))
+			assert!(formula_copy.validate(&solution))
 		}
 		None => println!("There is no solution.")
 	}

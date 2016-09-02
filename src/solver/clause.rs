@@ -6,7 +6,7 @@ use bit_set::BitSet;
 pub type Set = BitSet;
 pub type Bag = Vec<usize>;
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Clause {
 	pub t: Bag,
 	pub f: Bag
