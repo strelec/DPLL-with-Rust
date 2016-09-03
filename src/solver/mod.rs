@@ -122,10 +122,10 @@ impl CNF {
 
 			// Step 2: Detect pure variables
 			for i in 0..self.count_t.len() {
-				let tx = self.count_t[i] != 0 && self.count_f[i] == 0 && !f.contains(i);
-				let fx = self.count_f[i] != 0 && self.count_t[i] == 0 && !t.contains(i);
-				if tx { t.insert(i); }
-				if fx { f.insert(i); }
+				let is_true = self.count_t[i] != 0;
+				let is_false = self.count_f[i] != 0;
+				if is_true && !is_false && !f.contains(i) { t.insert(i); }
+				if is_false && !is_true && !t.contains(i) { f.insert(i); }
 			}
 
 			let new_known = t.len() + f.len();
