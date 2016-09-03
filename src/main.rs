@@ -10,15 +10,15 @@ use solver::*;
 
 fn read_input<T: io::BufRead + Sized>(source: T) -> CNF {
 	CNF::new(source.lines().flat_map( |x| {
-		let y = x.unwrap();
+		let y = x.expect("Error reading a source.");
 		let line = y.trim();
-		match line.chars().nth(0).unwrap() {
+		match line.chars().nth(0).expect("Unexpected empty line.") {
 			'c' | 'p' => None,
 			_ => {
 				let mut t = Bag::new();
 				let mut f = Bag::new();
 				for v in line.split_whitespace() {
-					let n: i32 = v.parse::<i32>().unwrap();
+					let n: i32 = v.parse::<i32>().expect("Expected a number.");
 					match n.cmp(&0) {
 						Equal   => break,
 						Greater => t.push(n as usize),
@@ -38,7 +38,7 @@ fn read_stdin() -> CNF {
 }
 
 fn read_file(name: String) -> CNF {
-	let file = io::BufReader::new(File::open(name).unwrap());
+	let file = io::BufReader::new(File::open(name).expect("File not found."));
 	read_input(file)
 }
 
