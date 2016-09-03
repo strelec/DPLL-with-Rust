@@ -3,6 +3,7 @@ extern crate bit_set;
 use std::cmp::Ordering::*;
 use std::fs::File;
 use std::io;
+use std::env;
 
 mod solver;
 use solver::*;
@@ -42,7 +43,10 @@ fn read_file(name: String) -> CNF {
 }
 
 fn main() {
-	let mut formula = read_stdin();
+	let mut formula = match env::args().nth(1) {
+		Some(name) => read_file(name),
+		None       => read_stdin()
+	};
 
 	match formula.dpll(&Set::new(), &Set::new()) {
 		Some(solution) => {
