@@ -2,7 +2,6 @@ pub use self::clause::*;
 
 mod clause;
 
-#[derive(Clone)]
 pub struct CNF {
 	formula: Vec<Clause>,
 	mask: Vec<bool>,
@@ -14,14 +13,15 @@ impl CNF {
 	pub fn new(formula: Vec<Clause>) -> CNF {
 		let len = formula.len();
 
-		let mut variable_count = 0usize;
+		let mut vlen = 0usize;
 		for clause in &formula {
-			for v in &clause.t { if *v > variable_count { variable_count = *v } }
-			for v in &clause.f { if *v > variable_count { variable_count = *v } }
+			for v in &clause.t { if *v > vlen { vlen = *v } }
+			for v in &clause.f { if *v > vlen { vlen = *v } }
 		}
+		vlen += 1;
 
-		let mut count_t = vec![0u16; variable_count+1];
-		let mut count_f = vec![0u16; variable_count+1];
+		let mut count_t = vec![0u16; vlen];
+		let mut count_f = vec![0u16; vlen];
 		for clause in &formula {
 			for v in &clause.t { count_t[*v] += 1 }
 			for v in &clause.f { count_f[*v] += 1 }
@@ -96,7 +96,7 @@ impl CNF {
 		let mut t = t.clone();
 		let mut f = f.clone();
 
-		loop { // until there are no more pure or unit clauses
+		loop {
 			// Step 1: Detect unit clauses
 			for i in 0..self.formula.len() {
 				if self.check_satisfied(i, &t, &f) { continue }
@@ -128,13 +128,14 @@ impl CNF {
 				if is_false && !is_true && !t.contains(i) { f.insert(i); }
 			}
 
+			// Step 3: Check if we have produces any variables in this iteration
 			let new_known = t.len() + f.len();
 			assert!(new_known >= known);
 			if new_known == known { break }
 			known = new_known
 		}
 
-		// Step 3: Branch
+		// Step 4: Select the best variable to branch
 		let branch_var = self.branching_strategy(&t, &f);
 
 		t.insert(branch_var);
