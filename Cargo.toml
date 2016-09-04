@@ -8,3 +8,11 @@ bit-set = "*"
 
 [profile.release]
 lto = true
+
+[[bin]]
+name = "solve"
+path = "src/main.rs"
+
+[[bin]]
+name = "generate"
+path = "src/generate.rs"

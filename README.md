@@ -13,8 +13,8 @@ Running
 ---
 Once you have a binary, you can either pass your file as a parameter or pipe it into the standard input. Both examples below:
 ```
-target/release/dpll-rust samples/easy/19x19queens.txt
-target/release/dpll-rust < samples/easy/19x19queens.txt
+target/release/solve samples/easy/19x19queens.txt
+target/release/solve < samples/easy/19x19queens.txt
 ```
 
 Benchmarking

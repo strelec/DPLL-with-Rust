@@ -8,7 +8,7 @@ for f in samples/trivial/* samples/easy/* samples/hard/*; do
 	if [ -f $f ]; then
 		echo
 		echo $f:
-		/usr/bin/time -f "%U\t%M" target/release/dpll-rust < $f > /dev/null
-		/usr/bin/time -f "%U\t%M" target/release/dpll-rust < $f > /dev/null
+		/usr/bin/time -f "%U\t%M" target/release/solve < $f > /dev/null
+		/usr/bin/time -f "%U\t%M" target/release/solve < $f > /dev/null
 	fi
 done
