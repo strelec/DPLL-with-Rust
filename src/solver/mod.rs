@@ -11,6 +11,71 @@ pub struct CNF {
 }
 
 impl CNF {
+	pub fn dpll(&mut self, t: &Set, f: &Set) -> Option<Set> {
+		let height = self.history.len();
+
+		let mut known = t.len() + f.len();
+		let mut t = t.clone();
+		let mut f = f.clone();
+
+		loop {
+			// Step 1: Detect unit clauses
+			for i in 0..self.formula.len() {
+				if self.check_satisfied(i, &t, &f) { continue }
+
+				match Clause::find_unit(&self.formula[i].t, &f, 2) {
+					(0, _) =>
+						match Clause::find_unit(&self.formula[i].f, &t, 2) {
+							(0, _) => { self.pop_state(height); return None },
+							(1, v) => { f.insert(v); self.mark_satisfied(i) },
+							_ => {}
+						},
+					(1, v) =>
+						match Clause::find_unit(&self.formula[i].f, &t, 1) {
+							(0, _) => { t.insert(v); self.mark_satisfied(i) },
+							_ => {}
+						},
+					_ => {}
+				}
+			}
+
+			if self.all_satisfied() { return Some(t) }
+			if !t.is_disjoint(&f) { self.pop_state(height); return None }
+
+			// Step 2: Detect pure variables
+			for i in 0..self.count_t.len() {
+				let is_true = self.count_t[i] != 0;
+				let is_false = self.count_f[i] != 0;
+				if is_true && !is_false && !f.contains(i) { t.insert(i); }
+				if is_false && !is_true && !t.contains(i) { f.insert(i); }
+			}
+
+			// Step 3: Check if we have produced any variables in this iteration
+			let new_known = t.len() + f.len();
+			assert!(new_known >= known);
+			if new_known == known { break }
+			known = new_known
+		}
+
+		// Step 4: Select the best variable to branch
+		let branch_var = self.branching_strategy(&t, &f);
+
+		t.insert(branch_var);
+		if let Some(set) = self.dpll(&t, &f) {
+			return Some(set)
+		}
+
+		t.remove(branch_var);
+		f.insert(branch_var);
+		if let Some(set) = self.dpll(&t, &f) {
+			return Some(set)
+		}
+
+		// Step 5: Neither true nor false brach succeeded
+		self.pop_state(height);
+		None
+	}
+
 	pub fn new(formula: Vec<Clause>) -> CNF {
 		let len = formula.len();
 
@@ -77,72 +142,6 @@ impl CNF {
 		self.history.truncate(height)
 	}
 
-
-	pub fn dpll(&mut self, t: &Set, f: &Set) -> Option<Set> {
-		let height = self.history.len();
-
-		let mut known = t.len() + f.len();
-		let mut t = t.clone();
-		let mut f = f.clone();
-
-		loop {
-			// Step 1: Detect unit clauses
-			for i in 0..self.formula.len() {
-				if self.check_satisfied(i, &t, &f) { continue }
-
-				match Clause::find_unit(&self.formula[i].t, &f, 2) {
-					(0, _) =>
-						match Clause::find_unit(&self.formula[i].f, &t, 2) {
-							(0, _) => { self.pop_state(height); return None },
-							(1, v) => { f.insert(v); self.mark_satisfied(i) },
-							_ => {}
-						},
-					(1, v) =>
-						match Clause::find_unit(&self.formula[i].f, &t, 1) {
-							(0, _) => { t.insert(v); self.mark_satisfied(i) },
-							_ => {}
-						},
-					_ => {}
-				}
-			}
-
-			if self.all_satisfied() { return Some(t) }
-			if !t.is_disjoint(&f) { self.pop_state(height); return None }
-
-			// Step 2: Detect pure variables
-			for i in 0..self.count_t.len() {
-				let is_true = self.count_t[i] != 0;
-				let is_false = self.count_f[i] != 0;
-				if is_true && !is_false && !f.contains(i) { t.insert(i); }
-				if is_false && !is_true && !t.contains(i) { f.insert(i); }
-			}
-
-			// Step 3: Check if we have produced any variables in this iteration
-			let new_known = t.len() + f.len();
-			assert!(new_known >= known);
-			if new_known == known { break }
-			known = new_known
-		}
-
-		// Step 4: Select the best variable to branch
-		let branch_var = self.branching_strategy(&t, &f);
-
-		t.insert(branch_var);
-		if let Some(set) = self.dpll(&t, &f) {
-			return Some(set)
-		}
-
-		t.remove(branch_var);
-		f.insert(branch_var);
-		if let Some(set) = self.dpll(&t, &f) {
-			return Some(set)
-		}
-
-		// Step 5: Neither true nor false brach succeeded
-		self.pop_state(height);
-		None
-	}
-	
 	pub fn validate(&self, solution: &Set) -> bool {
 		self.formula.iter().all( |c| c.eval_complete(solution) )
 	}
