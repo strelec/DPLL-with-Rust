@@ -6,7 +6,8 @@ pub struct CNF {
 	formula: Vec<Clause>,
 	mask: Vec<bool>,
 	history: Vec<usize>,
-	count_t: Vec<u16>, count_f: Vec<u16>,
+	count_t: Vec<u16>,
+	count_f: Vec<u16>,
 }
 
 impl CNF {
@@ -31,11 +32,12 @@ impl CNF {
 			formula: formula,
 			mask: vec![false; len],
 			history: Vec::with_capacity(len),
-			count_t: count_t, count_f: count_f,
+			count_t: count_t,
+			count_f: count_f,
 		}
 	}
 
-	fn branching_strategy(self: &CNF, t: &Set, f: &Set) -> usize {
+	fn branching_strategy(&self, t: &Set, f: &Set) -> usize {
 		// Select the most commonly occuring variable
 		let mut count = 0u16;
 		let mut result = 0usize;
@@ -49,37 +51,24 @@ impl CNF {
 		result
 	}
 
-	fn find_unit(bag: &Bag, filter: &Set, up_to: u8) -> (u8, usize) {
-		let mut count = 0u8;
-		let mut var = 0;
-		for &v in bag {
-			if !filter.contains(v) {
-				count += 1;
-				var = v;
-				if count == up_to { break }
-			}
-		}
-		(count, var)
-	}
-
-	fn all_satisfied(self: &CNF) -> bool {
+	fn all_satisfied(&self) -> bool {
 		self.history.len() == self.formula.len()
 	}
 
-	fn mark_satisfied(self: &mut CNF, i: usize) {
+	fn mark_satisfied(&mut self, i: usize) {
 		self.mask[i] = true;
 		self.history.push(i);
 		for v in &self.formula[i].t { self.count_t[*v] -= 1 }
 		for v in &self.formula[i].f { self.count_f[*v] -= 1 }
 	}
 
-	fn check_satisfied(self: &mut CNF, i: usize, t: &Set, f: &Set) -> bool {
+	fn check_satisfied(&mut self, i: usize, t: &Set, f: &Set) -> bool {
 		self.mask[i] || self.formula[i].eval(&t, &f) && {
 			self.mark_satisfied(i); true
 		}
 	}
 
-	fn pop_state(self: &mut CNF, height: usize) {
+	fn pop_state(&mut self, height: usize) {
 		for i in self.history[height..].into_iter() {
 			self.mask[*i] = false;
 			for v in &self.formula[*i].t { self.count_t[*v] += 1 }
@@ -89,7 +78,7 @@ impl CNF {
 	}
 
 
-	pub fn dpll(self: &mut CNF, t: &Set, f: &Set) -> Option<Set> {
+	pub fn dpll(&mut self, t: &Set, f: &Set) -> Option<Set> {
 		let height = self.history.len();
 
 		let mut known = t.len() + f.len();
@@ -101,15 +90,15 @@ impl CNF {
 			for i in 0..self.formula.len() {
 				if self.check_satisfied(i, &t, &f) { continue }
 
-				match CNF::find_unit(&self.formula[i].t, &f, 2) {
+				match Clause::find_unit(&self.formula[i].t, &f, 2) {
 					(0, _) =>
-						match CNF::find_unit(&self.formula[i].f, &t, 2) {
+						match Clause::find_unit(&self.formula[i].f, &t, 2) {
 							(0, _) => { self.pop_state(height); return None },
 							(1, v) => { f.insert(v); self.mark_satisfied(i) },
 							_ => {}
 						},
 					(1, v) =>
-						match CNF::find_unit(&self.formula[i].f, &t, 1) {
+						match Clause::find_unit(&self.formula[i].f, &t, 1) {
 							(0, _) => { t.insert(v); self.mark_satisfied(i) },
 							_ => {}
 						},
@@ -128,7 +117,7 @@ impl CNF {
 				if is_false && !is_true && !t.contains(i) { f.insert(i); }
 			}
 
-			// Step 3: Check if we have produces any variables in this iteration
+			// Step 3: Check if we have produced any variables in this iteration
 			let new_known = t.len() + f.len();
 			assert!(new_known >= known);
 			if new_known == known { break }
@@ -149,11 +138,12 @@ impl CNF {
 			return Some(set)
 		}
 
+		// Step 5: Neither true nor false brach succeeded
 		self.pop_state(height);
 		None
 	}
 	
-	pub fn validate(self: &CNF, solution: &Set) -> bool {
+	pub fn validate(&self, solution: &Set) -> bool {
 		self.formula.iter().all( |c| c.eval_complete(solution) )
 	}
 }
