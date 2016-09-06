@@ -2,6 +2,8 @@ pub use self::clause::*;
 
 mod clause;
 
+use std::path::Path;
+
 pub struct CNF {
 	formula: Vec<Clause>,
 	mask: Vec<bool>,
@@ -144,5 +146,30 @@ impl CNF {
 
 	pub fn validate(&self, solution: &Set) -> bool {
 		self.formula.iter().all( |c| c.eval_complete(solution) )
+	}
+	
+	pub fn to_file(&self, path: &Path) {
+		use std::error::Error;
+		use std::io::prelude::*;
+		use std::fs::File;
+	
+		let display = path.display();
+
+		let mut file = match File::create(path) {
+			Err(why) => panic!("Couldn't create {}: {}", display, why.description()),
+			Ok(file) => file,
+		};
+	
+		file.write(format!("p cnf {} {}\n", self.count_t.len(), self.formula.len()).as_bytes());
+		
+		for clause in &self.formula {
+			for v in &clause.t {
+				file.write(format!("{} ", v).as_bytes());
+			}
+			for v in &clause.f {
+				file.write(format!("-{} ", v).as_bytes());
+			}
+			file.write("0\n".as_bytes());
+		}
 	}
 }

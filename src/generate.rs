@@ -1,8 +1,7 @@
 mod sudoku;
 use sudoku::*;
 
-mod solver;
-use solver::*;
+use std::path::Path;
 
 fn main() {
 	// http://www.telegraph.co.uk/science/science-news/9359579/Worlds-hardest-sudoku-can-you-crack-it.html
@@ -22,9 +21,10 @@ fn main() {
 			0,9,0, 0,0,0, 4,0,0,
 		]
 	};
+	small.to_cnf().to_file(Path::new("samples/sudokus/small.cnf"));
 	
 	let (a,  b,  c,  d,  e,  f,  g) =
-	    (10, 11, 12, 13, 14, 15, 16);
+		(10, 11, 12, 13, 14, 15, 16);
 	
 	let big = Sudoku {
 		size: 4,
@@ -50,9 +50,10 @@ fn main() {
 			0,0,a,c, 0,0,2,0, 0,0,0,0, 0,e,9,0,
 		]
 	};
+	big.to_cnf().to_file(Path::new("samples/sudokus/big.cnf"));
 	
 	let (h,  i,  j,  k,  l,  m,  n,  o,  p) =
-	    (17, 18, 19, 20, 21, 22, 23, 24, 25);
+		(17, 18, 19, 20, 21, 22, 23, 24, 25);
 
 	let huge = Sudoku {
 		size: 5,
@@ -88,4 +89,5 @@ fn main() {
 			0,0,0,m,0, 0,0,0,0,0, l,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0,
 		]
 	};
+	huge.to_cnf().to_file(Path::new("samples/sudokus/huge.cnf"));
 }
