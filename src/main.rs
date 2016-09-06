@@ -1,11 +1,10 @@
-extern crate bit_set;
+extern crate solver;
 
 use std::cmp::Ordering::*;
 use std::fs::File;
 use std::io;
 use std::env;
 
-mod solver;
 use solver::*;
 
 fn read_input<T: io::BufRead + Sized>(source: T) -> CNF {

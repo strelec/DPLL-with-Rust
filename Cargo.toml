@@ -9,6 +9,10 @@ bit-set = "*"
 [profile.release]
 lto = true
 
+[lib]
+name = "solver"
+path = "src/solver/mod.rs"
+
 [[bin]]
 name = "solve"
 path = "src/main.rs"

@@ -1,6 +1,6 @@
 extern crate bit_set;
 
-use bit_set::BitSet;
+use self::bit_set::BitSet;
 
 pub type Set = BitSet;
 pub type Bag = Vec<usize>;

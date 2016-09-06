@@ -1,6 +1,9 @@
 mod sudoku;
 use sudoku::*;
 
+mod solver;
+use solver::*;
+
 fn main() {
 	// http://www.telegraph.co.uk/science/science-news/9359579/Worlds-hardest-sudoku-can-you-crack-it.html
 	let small = Sudoku {
