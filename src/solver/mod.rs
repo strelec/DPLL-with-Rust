@@ -7,7 +7,7 @@ use std::path::Path;
 pub struct CNF {
 	formula: Vec<Clause>,
 	mask: Vec<bool>,
-	history: Vec<usize>,
+	history: Vec<u32>,
 	count_t: Vec<u16>,
 	count_f: Vec<u16>,
 }
@@ -124,7 +124,7 @@ impl CNF {
 
 	fn mark_satisfied(&mut self, i: usize) {
 		self.mask[i] = true;
-		self.history.push(i);
+		self.history.push(i as u32);
 		for v in &self.formula[i].t { self.count_t[*v] -= 1 }
 		for v in &self.formula[i].f { self.count_f[*v] -= 1 }
 	}
@@ -137,9 +137,10 @@ impl CNF {
 
 	fn pop_state(&mut self, height: usize) {
 		for i in self.history[height..].into_iter() {
-			self.mask[*i] = false;
-			for v in &self.formula[*i].t { self.count_t[*v] += 1 }
-			for v in &self.formula[*i].f { self.count_f[*v] += 1 }
+			let i = *i as usize;
+			self.mask[i] = false;
+			for v in &self.formula[i].t { self.count_t[*v] += 1 }
+			for v in &self.formula[i].f { self.count_f[*v] += 1 }
 		}
 		self.history.truncate(height)
 	}
