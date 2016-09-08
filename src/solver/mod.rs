@@ -3,9 +3,11 @@ pub use self::clause::*;
 mod clause;
 
 use std::path::Path;
+use std::ops::Range;
 
 pub struct CNF {
 	formula: Vec<Clause>,
+	n: usize,
 	mask: Vec<bool>,
 	history: Vec<u32>,
 	count_t: Vec<u16>,
@@ -45,7 +47,7 @@ impl CNF {
 			if !t.is_disjoint(&f) { self.pop_state(height); return None }
 
 			// Step 2: Detect pure variables
-			for i in 0..self.count_t.len() {
+			for i in self.variables() {
 				let is_true = self.count_t[i] != 0;
 				let is_false = self.count_f[i] != 0;
 				if is_true && !is_false && !f.contains(i) { t.insert(i); }
@@ -78,18 +80,12 @@ impl CNF {
 		None
 	}
 
-	pub fn new(formula: Vec<Clause>) -> CNF {
+	pub fn new(formula: Vec<Clause>, n: usize) -> CNF {
 		let len = formula.len();
 
-		let mut vlen = 0usize;
-		for clause in &formula {
-			for v in &clause.t { if *v > vlen { vlen = *v } }
-			for v in &clause.f { if *v > vlen { vlen = *v } }
-		}
-		vlen += 1;
 
-		let mut count_t = vec![0u16; vlen];
-		let mut count_f = vec![0u16; vlen];
+		let mut count_t = vec![0u16; n+1];
+		let mut count_f = vec![0u16; n+1];
 		for clause in &formula {
 			for v in &clause.t { count_t[*v] += 1 }
 			for v in &clause.f { count_f[*v] += 1 }
@@ -97,6 +93,7 @@ impl CNF {
 
 		CNF {
 			formula: formula,
+			n: n,
 			mask: vec![false; len],
 			history: Vec::with_capacity(len),
 			count_t: count_t,
@@ -104,11 +101,16 @@ impl CNF {
 		}
 	}
 
+	#[inline]
+	pub fn variables(&self) -> Range<usize> {
+		1..(self.n + 1)
+	}
+
 	fn branching_strategy(&self, t: &Set, f: &Set) -> usize {
 		// Select the most commonly occuring variable
 		let mut count = 0u16;
 		let mut result = 0usize;
-		for i in 0..self.count_t.len() {
+		for i in self.variables() {
 			let item = self.count_t[i] + self.count_f[i];
 			if item > count && !t.contains(i) && !f.contains(i) {
 				count = item;
@@ -161,7 +163,7 @@ impl CNF {
 			Ok(file) => file,
 		};
 	
-		file.write(format!("p cnf {} {}\n", self.count_t.len(), self.formula.len()).as_bytes());
+		file.write(format!("p cnf {} {}\n", self.n, self.formula.len()).as_bytes());
 		
 		for clause in &self.formula {
 			for v in &clause.t {

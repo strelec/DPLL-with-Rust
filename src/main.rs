@@ -8,15 +8,20 @@ use std::env;
 use solver::*;
 
 fn read_input<T: io::BufRead + Sized>(source: T) -> CNF {
-	CNF::new(source.lines().flat_map( |x| {
-		let y = x.expect("Error reading a source.");
-		let line = y.trim();
-		match line.chars().nth(0).expect("Unexpected empty line.") {
-			'c' | 'p' => None,
+	let mut n = 0;
+	let clauses = source.lines().flat_map( |x| {
+		let line = x.expect("Error reading a source.");
+		let elements: Vec<_> = line.trim().split_whitespace().collect();
+		match elements.get(0) {
+			None | Some(&"c") => None,
+			Some(&"p") => {
+				n = elements[2].parse::<usize>().expect("Expected number of variables.");
+				None
+			},
 			_ => {
 				let mut t = Bag::new();
 				let mut f = Bag::new();
-				for v in line.split_whitespace() {
+				for v in elements {
 					let n: i32 = v.parse::<i32>().expect("Expected a number.");
 					match n.cmp(&0) {
 						Equal   => break,
@@ -27,7 +32,8 @@ fn read_input<T: io::BufRead + Sized>(source: T) -> CNF {
 				Some(Clause { t: t, f: f })
 			}
 		}
-	}).collect())
+	}).collect();
+	CNF::new(clauses, n)
 }
 
 fn read_stdin() -> CNF {
@@ -49,7 +55,10 @@ fn main() {
 
 	match formula.dpll(&Set::new(), &Set::new()) {
 		Some(solution) => {
-			println!("{:?}", solution);
+			println!("{}", formula.variables().map( |v|
+				if solution.contains(v) { v.to_string() } else { format!("-{}", v) }
+			).collect::<Vec<_>>().join(" ") );
+
 			// Assert that the solution is correct.
 			assert!(formula.validate(&solution))
 		}

@@ -85,6 +85,6 @@ impl Sudoku {
 		o.extend( at_least_one(&blocks) );
 		o.extend( at_most_one(&blocks) );
 		
-		CNF::new(o)
+		CNF::new(o, n * n * n)
 	}
 }
