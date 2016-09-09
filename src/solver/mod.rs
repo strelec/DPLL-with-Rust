@@ -18,11 +18,13 @@ impl CNF {
 	pub fn dpll(&mut self, t: &Set, f: &Set) -> Option<Set> {
 		let height = self.history.len();
 
-		let mut known = t.len() + f.len();
 		let mut t = t.clone();
 		let mut f = f.clone();
 
-		loop {
+		let mut changed = true;
+		while changed {
+			changed = false;
+
 			// Step 1: Detect unit clauses
 			for i in 0..self.formula.len() {
 				if self.check_satisfied(i, &t, &f) { continue }
@@ -31,12 +33,12 @@ impl CNF {
 					(0, _) =>
 						match Clause::find_unit(&self.formula[i].f, &t, 2) {
 							(0, _) => { self.pop_state(height); return None },
-							(1, v) => { f.insert(v); self.mark_satisfied(i) },
+							(1, v) => { f.insert(v); changed = true; self.mark_satisfied(i) },
 							_ => {}
 						},
 					(1, v) =>
 						match Clause::find_unit(&self.formula[i].f, &t, 1) {
-							(0, _) => { t.insert(v); self.mark_satisfied(i) },
+							(0, _) => { t.insert(v); changed = true; self.mark_satisfied(i) },
 							_ => {}
 						},
 					_ => {}
@@ -50,18 +52,12 @@ impl CNF {
 			for i in self.variables() {
 				let is_true = self.count_t[i] != 0;
 				let is_false = self.count_f[i] != 0;
-				if is_true && !is_false && !f.contains(i) { t.insert(i); }
-				if is_false && !is_true && !t.contains(i) { f.insert(i); }
+				if is_true && !is_false && !f.contains(i) { t.insert(i); changed = true }
+				if is_false && !is_true && !t.contains(i) { f.insert(i); changed = true }
 			}
-
-			// Step 3: Check if we have produced any variables in this iteration
-			let new_known = t.len() + f.len();
-			assert!(new_known >= known);
-			if new_known == known { break }
-			known = new_known
 		}
 
-		// Step 4: Select the best variable to branch
+		// Step 3: Select the best variable to branch
 		let branch_var = self.branching_strategy(&t, &f);
 
 		t.insert(branch_var);
@@ -75,7 +71,7 @@ impl CNF {
 			return Some(set)
 		}
 
-		// Step 5: Neither true nor false brach succeeded
+		// Step 4: Neither true nor false brach succeeded
 		self.pop_state(height);
 		None
 	}
